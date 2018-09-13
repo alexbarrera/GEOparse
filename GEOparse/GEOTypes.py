@@ -328,6 +328,10 @@ class GSM(SimpleGEO):
 
     geotype = 'SAMPLE'
 
+    def __init__(self, name, metadata, table, columns):
+        super(GSM, self).__init__(name, metadata, table, columns)
+        self._sra_downloader = None
+
     def annotate(self, gpl, annotation_column, gpl_on="ID", gsm_on="ID_REF",
                  in_place=False):
         """Annotate GSM with provided GPL
@@ -365,6 +369,12 @@ class GSM(SimpleGEO):
             return None
         else:
             return annotated
+
+    @property
+    def sra_downloader(self):
+        if self._sra_downloader is None:
+            self._sra_downloader = SRADownloader(self)
+        return self._sra_downloader
 
     def annotate_and_average(self, gpl, expression_column, group_by_column,
                              rename=True, force=False, merge_on_column=None,
@@ -515,8 +525,8 @@ class GSM(SimpleGEO):
             :obj:`Exception`: Wrong e-mail
             :obj:`HTTPError`: Cannot access or connect to DB
         """
-        downloader = SRADownloader(self, email, directory, **kwargs)
-        return {"SRA": downloader.download()}
+        return {
+            "SRA": self.sra_downloader.download(email, directory, **kwargs)}
 
 
 class GPL(SimpleGEO):
